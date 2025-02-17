@@ -2,6 +2,7 @@
   "name": "my-chat",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "main": "./electron/main.js",
   "author": {
     "name": "Xirealm",
@@ -53,7 +54,10 @@
     }
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.0.6",
+    "element-plus": "^2.9.4",
     "pinia": "^2.3.1",
+    "tailwindcss": "^4.0.6",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

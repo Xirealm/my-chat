@@ -1,1 +1,24 @@
-"use strict";const{app:e,BrowserWindow:t}=require("electron"),i=require("path");process.env.ELECTRON_DISABLE_SECURITY_WARNINGS="true";const o=()=>{const n=new t({width:800,height:600});process.env.VITE_DEV_SERVER_URL?(n.loadURL(process.env.VITE_DEV_SERVER_URL),n.webContents.openDevTools()):n.loadFile(i.join(__dirname,"../dist/index.html"))};e.whenReady().then(()=>{o(),e.on("activate",()=>{t.getAllWindows().length===0&&o()})});e.on("window-all-closed",()=>{process.platform!=="darwin"&&e.quit()});
+import { app, BrowserWindow } from "electron";
+import path from "path";
+process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
+const createWindow = () => {
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600
+  });
+  if (process.env.VITE_DEV_SERVER_URL) {
+    win.loadURL(process.env.VITE_DEV_SERVER_URL);
+    win.webContents.openDevTools();
+  } else {
+    win.loadFile(path.join(__dirname, "../dist/index.html"));
+  }
+};
+app.whenReady().then(() => {
+  createWindow();
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});

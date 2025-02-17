@@ -1,6 +1,7 @@
-// src-electron/main.js
-const { app, BrowserWindow } = require('electron')
-const path = require('path')
+import {app, BrowserWindow } from "electron"
+import path from 'path'
+// const { app, BrowserWindow } = require('electron')
+// const path = require('path')
 
 // 屏蔽安全警告
 // ectron Security Warning (Insecure Content-Security-Policy)
