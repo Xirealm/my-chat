@@ -1,4 +1,4 @@
-import {app, BrowserWindow } from "electron"
+import { app, BrowserWindow } from "electron"
 import path from 'path'
 // const { app, BrowserWindow } = require('electron')
 // const path = require('path')
@@ -11,7 +11,14 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 const createWindow = () => {
     const win = new BrowserWindow({
         width: 800,
-        height: 600,
+        height: 550,
+        resizable: false,
+        autoHideMenuBar: true,
+        // frame: false,    // 移除窗口边框
+        // webPreferences: {
+        //     nodeIntegration: true,
+        //     contextIsolation: false
+        // }
     })
 
     // win.loadURL('http://localhost:3000')
@@ -19,7 +26,7 @@ const createWindow = () => {
     if (process.env.VITE_DEV_SERVER_URL) {
         win.loadURL(process.env.VITE_DEV_SERVER_URL)
         // 开启调试台
-        win.webContents.openDevTools()
+        // win.webContents.openDevTools()
     } else {
         win.loadFile(path.join(__dirname, '../dist/index.html'))
     }

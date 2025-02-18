@@ -1,15 +1,34 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from "vue-router";
+
+import LoginView from "../views/login/LoginView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: "/",
+      name: "root",
+      component: LoginView,
+    },
+    {
+      path: "/main",
+      component: () => import("../views/main/MainView.vue"),
+      children: [
+        {
+          path: "chat",
+          component: () => import("@/views/main/ChatView.vue"),
+        },
+        {
+          path: "contacts",
+          component: () => import("@/views/main/ContactView.vue"),
+        },
+        {
+          path: "",
+          redirect: "/main/chat",
+        },
+      ],
     },
   ],
-})
+});
 
-export default router
+export default router;
