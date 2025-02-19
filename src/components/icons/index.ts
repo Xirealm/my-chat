@@ -3,3 +3,4 @@ export { default as ChatIcon } from "./ChatIcon.vue";
 export { default as ContactIcon } from "./ContactIcon.vue";
 export { default as EmojiIcon } from "./EmojiIcon.vue";
 export { default as FileIcon } from "./FileIcon.vue";
+export { default as LogoutIcon } from "./LogoutIcon.vue";

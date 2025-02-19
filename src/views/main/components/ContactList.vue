@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import SearchInput from "@/components/common/SearchInput.vue";
+import UserAvatar from "@/components/UserAvatar.vue";
 
 // 处理搜索
 const handleSearch = (searchText: string) => {
   console.log("搜索联系人:", searchText);
   // 这里实现搜索逻辑
 };
+
+// 模拟联系人数据
+const contacts = [
+  { id: 1, username: "张三", avatar: "", online: true },
+  { id: 2, username: "李四", avatar: "", online: false },
+  { id: 3, username: "王五", avatar: "", online: true },
+];
 </script>
 
 <template>
@@ -18,14 +26,22 @@ const handleSearch = (searchText: string) => {
         <div class="space-y-1">
           <!-- 这里放联系人列表项 -->
           <div
-            v-for="i in 3"
-            :key="i"
+            v-for="contact in contacts"
+            :key="contact.id"
             class="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
           >
-            <div class="w-10 h-10 rounded-full bg-blue-100 flex-shrink-0"></div>
+            <UserAvatar
+              :username="contact.username"
+              :avatar="contact.avatar"
+              size="md"
+            />
             <div class="ml-3 flex-1 min-w-0">
-              <div class="font-medium text-gray-900">用户名称</div>
-              <p class="text-sm text-gray-500 truncate">[在线]</p>
+              <div class="font-medium text-gray-900">
+                {{ contact.username }}
+              </div>
+              <p class="text-sm text-gray-500 truncate">
+                [{{ contact.online ? "在线" : "离线" }}]
+              </p>
             </div>
           </div>
         </div>

@@ -1,45 +1,146 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
+import { ElNotification } from "element-plus";
+import { postLoginAPI, postRegisterAPI } from "@/api/auth";
+import type { LoginForm, RegisterForm } from "@/types/auth";
+import type { FormInstance } from "element-plus";
 
 const router = useRouter();
 const userStore = useUserStore();
 
 const isLogin = ref(true);
-const loginForm = ref({
+const loginForm = ref<LoginForm>({
+  phone: "",
+  password: "",
+});
+
+const registerForm = ref<RegisterForm>({
+  phone: "",
   username: "",
   password: "",
+  confirmPassword: "",
 });
 
-const registerForm = ref({
-  password: "",
-  confirmPassword: "",
-  nickname: "",
-});
+const loading = ref(false);
+
+const loginFormRef = ref<FormInstance>();
+const registerFormRef = ref<FormInstance>();
+
+const loginShake = ref(false);
+const registerShake = ref(false);
+
+// 表单校验规则
+const loginRules = {
+  phone: [
+    { required: true, message: "请输入手机号", trigger: "blur" },
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: "请输入正确的手机号",
+      trigger: "blur",
+    },
+  ],
+  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+};
+
+const registerRules = {
+  phone: [
+    { required: true, message: "请输入手机号", trigger: "blur" },
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: "请输入正确的手机号",
+      trigger: "blur",
+    },
+  ],
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  password: [
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 6, message: "密码长度至少6位", trigger: "blur" },
+  ],
+  confirmPassword: [
+    { required: true, message: "请确认密码", trigger: "blur" },
+    {
+      validator: (rule: any, value: string, callback: any) => {
+        if (value !== registerForm.value.password) {
+          callback(new Error("两次密码不一致"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+};
 
 // 处理登录
-const handleLogin = () => {
-  console.log("登录信息:", loginForm.value);
-  // TODO: 实际登录逻辑
-  userStore.setUserInfo({
-    id: "1",
-    username: loginForm.value.username,
-    avatar:"https://xirealm.oss-cn-beijing.aliyuncs.com/xi/v2-4512c514732c060dd6b4f4269de50d01_r.jpg",
-    status: "online",
-  });
-  router.push("/main/chat");
+const handleLogin = async () => {
+  if (!loginFormRef.value) return;
+  try {
+    await loginFormRef.value.validate();
+    loading.value = true;
+    const result = await postLoginAPI({
+      phone: loginForm.value.phone,
+      password: loginForm.value.password,
+    });
+    userStore.setUserInfo(result.user, result.token);
+    router.push("/main/chat");
+  } catch (error: any) {
+    if (error.message) {
+      loginShake.value = true;
+      ElNotification({
+        title: "登录失败",
+        message: error.message || "账号或密码错误",
+        type: "error",
+        duration: 3000,
+        position: "top-left",
+      });
+      setTimeout(() => {
+        loginShake.value = false;
+      }, 500);
+    }
+  } finally {
+    loading.value = false;
+  }
 };
 
 // 处理注册
-const handleRegister = () => {
-  if (registerForm.value.password !== registerForm.value.confirmPassword) {
-    // TODO: 显示错误提示
-    console.error("两次密码不一致");
-    return;
+const handleRegister = async () => {
+  if (!registerFormRef.value) return;
+  try {
+    await registerFormRef.value.validate();
+    loading.value = true;
+    await postRegisterAPI({
+      phone: registerForm.value.phone,
+      username: registerForm.value.username,
+      password: registerForm.value.password,
+    });
+    ElNotification({
+      title: "注册成功",
+      message: "请使用新账号登录",
+      type: "success",
+      duration: 3000,
+      position: "top-left",
+    });
+    isLogin.value = true;
+    loginForm.value.phone = registerForm.value.phone;
+  } catch (error: any) {
+    if (error.message) {
+      registerShake.value = true;
+      ElNotification({
+        title: "注册失败",
+        message: error.message || "注册失败，请稍后重试",
+        type: "error",
+        duration: 3000,
+        position: "top-left",
+      });
+      setTimeout(() => {
+        registerShake.value = false;
+      }, 500);
+    }
+  } finally {
+    loading.value = false;
   }
-  console.log("注册信息:", registerForm.value);
-  // TODO: 实际注册逻辑
 };
 
 // 切换登录/注册面板
@@ -63,30 +164,37 @@ const togglePanel = () => {
 
     <!-- 登录/注册面板 -->
     <div
-      class="bg-white rounded-[15px] h-[450px] w-[300px] p-6 -translate-x-[10px] flex flex-col overflow-hidden"
+      class="bg-white rounded-[15px] h-[450px] w-[300px] p-8 -translate-x-[10px] flex flex-col overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl"
+      :class="{ 'shake-animation': loginShake || registerShake }"
     >
-      <h2 class="text-lg font-bold mb-4">
+      <h2 class="text-xl font-bold mb-6 text-gray-800">
         {{ isLogin ? "欢迎使用MyChat" : "欢迎注册MyChat" }}
       </h2>
 
       <!-- 登录表单 -->
-      <div v-if="isLogin" class="space-y-4">
-        <div>
+      <el-form
+        v-if="isLogin"
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="loginRules"
+        class="space-y-5"
+      >
+        <el-form-item prop="phone">
           <div class="mb-2">
             <label
               class="text-sm border-b-2 pb-1 border-blue-500 text-blue-500"
             >
-              用户名
+              手机号
             </label>
           </div>
           <el-input
-            v-model="loginForm.username"
-            placeholder="请输入用户名"
+            v-model="loginForm.phone"
+            placeholder="请输入手机号"
             size="large"
           />
-        </div>
+        </el-form-item>
 
-        <div>
+        <el-form-item prop="password">
           <div class="mb-2">
             <label
               class="text-sm border-b-2 pb-1 border-blue-500 text-blue-500"
@@ -100,42 +208,69 @@ const togglePanel = () => {
             placeholder="请输入密码"
             size="large"
           />
-        </div>
+        </el-form-item>
 
         <el-button
           type="primary"
-          class="w-full mt-4"
+          class="w-full mt-6 hover:opacity-90 transition-opacity"
           size="large"
+          :loading="loading"
           @click="handleLogin"
         >
           登录
         </el-button>
 
         <div class="flex justify-center mt-4">
-          <el-button link type="primary" @click="togglePanel">
+          <el-button
+            link
+            type="primary"
+            class="hover:scale-105 transition-transform"
+            @click="togglePanel"
+          >
             创建新账号
           </el-button>
         </div>
-      </div>
+      </el-form>
 
       <!-- 注册表单 -->
-      <div v-else class="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-        <div>
+      <el-form
+        v-else
+        ref="registerFormRef"
+        :model="registerForm"
+        :rules="registerRules"
+        class="space-y-4 flex-1 overflow-y-auto pr-2 login-scrollbar"
+      >
+        <el-form-item prop="phone">
           <div class="mb-2">
             <label
               class="text-sm border-b-2 pb-1 border-blue-500 text-blue-500"
             >
-              昵称
+              手机号
             </label>
           </div>
           <el-input
-            v-model="registerForm.nickname"
-            placeholder="请输入昵称"
+            v-model="registerForm.phone"
+            placeholder="请输入手机号"
             size="large"
           />
-        </div>
+        </el-form-item>
 
-        <div>
+        <el-form-item prop="username">
+          <div class="mb-2">
+            <label
+              class="text-sm border-b-2 pb-1 border-blue-500 text-blue-500"
+            >
+              用户名
+            </label>
+          </div>
+          <el-input
+            v-model="registerForm.username"
+            placeholder="请输入用户名"
+            size="large"
+          />
+        </el-form-item>
+
+        <el-form-item prop="password">
           <div class="mb-2">
             <label
               class="text-sm border-b-2 pb-1 border-blue-500 text-blue-500"
@@ -149,9 +284,9 @@ const togglePanel = () => {
             placeholder="请输入密码"
             size="large"
           />
-        </div>
+        </el-form-item>
 
-        <div>
+        <el-form-item prop="confirmPassword">
           <div class="mb-2">
             <label
               class="text-sm border-b-2 pb-1 border-blue-500 text-blue-500"
@@ -165,25 +300,31 @@ const togglePanel = () => {
             placeholder="请再次输入密码"
             size="large"
           />
-        </div>
+        </el-form-item>
 
-        <div class="pt-2">
+        <div class="pt-4">
           <el-button
             type="primary"
-            class="w-full"
+            class="w-full hover:opacity-90 transition-opacity"
             size="large"
+            :loading="loading"
             @click="handleRegister"
           >
             注册
           </el-button>
 
-          <div class="flex justify-center mt-3">
-            <el-button link type="primary" @click="togglePanel">
+          <div class="flex justify-center mt-4">
+            <el-button
+              link
+              type="primary"
+              class="hover:scale-105 transition-transform"
+              @click="togglePanel"
+            >
               返回登录
             </el-button>
           </div>
         </div>
-      </div>
+      </el-form>
     </div>
   </div>
 </template>
@@ -194,25 +335,47 @@ const togglePanel = () => {
   --el-input-focus-border-color: #3b82f6;
 }
 
-.custom-scrollbar {
+.login-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #e2e8f0 transparent;
+  scrollbar-color: rgba(203, 213, 225, 0.4) transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
+.login-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+.login-scrollbar::-webkit-scrollbar-track {
   background: transparent;
+  border-radius: 3px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #e2e8f0;
-  border-radius: 2px;
+.login-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(178, 178, 178, 0.252);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #cbd5e1;
+.login-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.6);
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+}
+
+.shake-animation {
+  animation: shake 0.5s ease-in-out;
 }
 </style>

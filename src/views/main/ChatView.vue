@@ -1,6 +1,49 @@
 <script setup lang="ts">
 import ChatList from "./components/ChatList.vue";
+import UserAvatar from "@/components/UserAvatar.vue";
 import { EmojiIcon, FileIcon } from "@/components/icons";
+import { useUserStore } from "@/stores/user";
+import { io } from "socket.io-client";
+import { onMounted } from "vue";
+
+const userStore = useUserStore();
+
+const currentChat = {
+  username: "张三",
+  avatar: "",
+  online: true,
+};
+
+// onMounted(() => {
+//   const socket = io("http://localhost:3000/chat", {
+//     transports: ["websocket"],
+//     auth: {
+//       authorization:
+//         "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImlhdCI6MTczOTk0OTk5MSwiZXhwIjoxNzQwMDM2MzkxfQ.wB88EfOfOm3McbLni6cR5XH75hZz_eGvs4MRXSztzWA",
+//     },
+//   });
+
+//   socket.on("connect", () => {
+//     console.log("Connected to WebSocket");
+//   });
+
+//   socket.on("error", (error) => {
+//     console.error("WebSocket error:", error);
+//   });
+
+//   socket.on("newMessage", (message) => {
+//     console.log("Received message:", message);
+//   });
+
+//   // 测试发送消息
+//   setTimeout(() => {
+//     socket.emit("sendMessage", {
+//       content: "这是一条测试消息",
+//       timestamp: new Date(),
+//       receiverId: 3,
+//     });
+//   }, 2000);
+// });
 </script>
 
 <template>
@@ -16,10 +59,18 @@ import { EmojiIcon, FileIcon } from "@/components/icons";
           class="h-16 px-6 border-b border-gray-100 flex items-center justify-between"
         >
           <div class="flex items-center space-x-4">
-            <div class="w-10 h-10 rounded-full bg-blue-100"></div>
+            <UserAvatar
+              :username="currentChat.username"
+              :avatar="currentChat.avatar"
+              size="md"
+            />
             <div>
-              <h2 class="text-base font-medium text-gray-900">用户名称</h2>
-              <p class="text-xs text-gray-500">[在线]</p>
+              <h2 class="text-base font-medium text-gray-900">
+                {{ currentChat.username }}
+              </h2>
+              <p class="text-xs text-gray-500">
+                [{{ currentChat.online ? "在线" : "离线" }}]
+              </p>
             </div>
           </div>
         </div>
@@ -28,7 +79,11 @@ import { EmojiIcon, FileIcon } from "@/components/icons";
         <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
           <!-- 对方的消息 -->
           <div class="flex items-start space-x-4">
-            <div class="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0"></div>
+            <UserAvatar
+              :username="currentChat.username"
+              :avatar="currentChat.avatar"
+              size="sm"
+            />
             <div class="flex flex-col items-start">
               <span class="text-xs text-gray-400 mb-1">12:30</span>
               <div
@@ -53,7 +108,11 @@ import { EmojiIcon, FileIcon } from "@/components/icons";
                 </p>
               </div>
             </div>
-            <div class="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0"></div>
+            <UserAvatar
+              :username="userStore.userInfo?.username || ''"
+              :avatar="userStore.userInfo?.avatar"
+              size="sm"
+            />
           </div>
 
           <!-- 时间分割线 -->
