@@ -43,7 +43,9 @@ const handleSendMessage = async () => {
     <div class="flex-1 h-full bg-white overflow-hidden">
       <div v-if="currentUser" class="h-full flex flex-col">
         <!-- 顶部信息栏 -->
-        <div class="h-16 px-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div
+          class="h-16 px-6 border-b border-gray-100 flex items-center justify-between shrink-0"
+        >
           <div class="flex items-center space-x-3">
             <h2 class="text-base font-medium text-gray-900">用户资料</h2>
           </div>
@@ -64,18 +66,26 @@ const handleSendMessage = async () => {
                   <h1 class="text-xl font-medium text-gray-900">
                     {{ currentUser.username }}
                   </h1>
-                  <span class="text-xs text-gray-500 px-2 py-0.5 bg-gray-50 rounded-full">
+                  <span
+                    class="text-xs text-gray-500 px-2 py-0.5 bg-gray-50 rounded-full"
+                  >
                     ID: {{ currentUser.id }}
                   </span>
                 </div>
                 <p class="text-sm text-gray-500 mb-2">
                   <span
                     class="inline-block w-2 h-2 rounded-full mr-1"
-                    :class="currentUser.status === 'online' ? 'bg-green-500' : 'bg-gray-400'"
+                    :class="
+                      currentUser.status === 'online'
+                        ? 'bg-green-500'
+                        : 'bg-gray-400'
+                    "
                   ></span>
                   {{ currentUser.status === "online" ? "在线" : "离线" }}
                 </p>
-                <p class="text-sm text-gray-600">{{ currentUser.bio || "这个人很懒，什么都没写" }}</p>
+                <p class="text-sm text-gray-600">
+                  {{ currentUser.bio || "这个人很懒，什么都没写" }}
+                </p>
               </div>
             </div>
 

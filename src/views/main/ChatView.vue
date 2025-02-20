@@ -60,6 +60,14 @@ watchEffect(() => {
 //     });
 //   }, 2000);
 // });
+
+const messageText = ref("");
+
+const handleSendMessage = () => {
+  if (!messageText.value.trim()) return;
+  console.log("发送消息:", messageText.value);
+  messageText.value = "";
+};
 </script>
 
 <template>
@@ -175,16 +183,60 @@ watchEffect(() => {
               <FileIcon class="w-5 h-5" />
             </button>
           </div>
-          <!-- 输入框 -->
-          <div class="p-4">
-            <textarea
-              rows="3"
-              placeholder="输入消息..."
-              class="w-full resize-none border-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:outline-none"
-            ></textarea>
+          <!-- 输入框区域 -->
+          <div class="flex flex-col p-3">
+            <div class="mb-2 min-h-[72px] max-h-36 relative">
+              <textarea
+                v-model="messageText"
+                rows="3"
+                placeholder="输入消息..."
+                class="w-full h-full resize-none border-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:outline-none custom-scrollbar absolute inset-0"
+                @keydown.enter.prevent="handleSendMessage"
+              ></textarea>
+            </div>
+            <div class="flex justify-end">
+              <button
+                class="h-8 px-4 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="!messageText.trim()"
+                @click="handleSendMessage"
+              >
+                发送
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped >
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.2) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 2px;  
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 40px 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.2);
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.4);
+}
+
+/* 隐藏滚动条上下箭头 */
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
+}
+</style>
