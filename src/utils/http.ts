@@ -4,7 +4,10 @@ import type { ApiResponse } from "@/types/http";
 import { useAuthStore } from "@/stores/auth";
 
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
+  baseURL:"/api",
+  // baseURL:
+  //   import.meta.env.VITE_API_BASE_URL ||
+  //   "https://ae49-39-144-95-127.ngrok-free.app",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
