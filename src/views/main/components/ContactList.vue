@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
+import { useRouter } from "vue-router";
 import SearchInput from "@/components/common/SearchInput.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
 import { getAllUsersAPI } from "@/api/user";
@@ -25,6 +26,12 @@ const contacts = [
   { id: 2, username: "李四", avatar: "", online: false },
   { id: 3, username: "王五", avatar: "", online: true },
 ];
+
+const router = useRouter();
+
+const handleContactClick = (userId: number) => {
+  router.push(`/main/contacts/${userId}`);
+};
 </script>
 
 <template>
@@ -40,6 +47,7 @@ const contacts = [
             v-for="contact in userStore.users"
             :key="contact.id"
             class="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+            @click="handleContactClick(contact.id)"
           >
             <UserAvatar
               :username="contact.username"
@@ -51,7 +59,7 @@ const contacts = [
                 {{ contact.username }}
               </div>
               <p class="text-sm text-gray-500 truncate">
-                [{{ contact.status === 'online' ? "在线" : "离线" }}]
+                [{{ contact.status === "online" ? "在线" : "离线" }}]
               </p>
             </div>
           </div>

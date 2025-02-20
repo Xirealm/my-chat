@@ -42,13 +42,14 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ["f68a-39-144-95-127.ngrok-free.app"], // 添加你的 ngrok 域名
-    proxy: {
-      "/api": {
-        target: "https://ae49-39-144-95-127.ngrok-free.app",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
+    // proxy: {
+    //   "/api": {
+    //     // target: "https://ae49-39-144-95-127.ngrok-free.app",
+    //     target: "http://localhost:3000",  
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/api/, ''),
+    //   },
+    // },
   },
   css: {
     preprocessorOptions: {

@@ -3,11 +3,9 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import type { ApiResponse } from "@/types/http";
 import { useAuthStore } from "@/stores/auth";
 
-const http = axios.create({
-  baseURL:"/api",
-  // baseURL:
-  //   import.meta.env.VITE_API_BASE_URL ||
-  //   "https://ae49-39-144-95-127.ngrok-free.app",
+const axiosInstance = axios.create({
+  // baseURL:"/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -15,7 +13,7 @@ const http = axios.create({
 });
 
 // 请求拦截器
-http.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const authStore = useAuthStore();
     if (authStore.token) {
@@ -29,9 +27,9 @@ http.interceptors.request.use(
 );
 
 // 响应拦截器
-http.interceptors.response.use(
-  (response: AxiosResponse) => {
-    const res = response.data as ApiResponse<any>;
+axiosInstance.interceptors.response.use(
+  <T>(response: AxiosResponse<ApiResponse<T>>) => {
+    const res = response.data;
     if (res.code !== 200 && res.code !== 201) {
       return Promise.reject(new Error(res.message || "请求失败"));
     }
@@ -60,5 +58,20 @@ http.interceptors.response.use(
     return Promise.reject(new Error(message));
   }
 );
+
+const http = {
+  get: <T>(url: string) => {
+    return axiosInstance.get<any, T>(url);
+  },
+  post: <T>(url: string, data?: any) => {
+    return axiosInstance.post<any, T>(url, data);
+  },
+  put: <T>(url: string, data?: any) => {
+    return axiosInstance.put<any, T>(url, data);
+  },
+  delete: <T>(url: string) => {
+    return axiosInstance.delete<any, T>(url);
+  },
+};
 
 export default http;

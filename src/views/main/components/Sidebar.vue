@@ -44,6 +44,11 @@ const handleLogout = async () => {
     // 用户取消操作，不做处理
   }
 };
+
+// 修改计算属性
+const isPathActive = (path: string) => {
+  return route.path.startsWith(path);
+};
 </script>
 
 <template>
@@ -76,14 +81,14 @@ const handleLogout = async () => {
         :to="item.path"
         class="relative w-12 h-12 mb-4 flex items-center justify-center rounded-xl transition-all duration-200"
         :class="[
-          currentPath === item.path
+          isPathActive(item.path)
             ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
             : 'text-gray-500 hover:bg-gray-100 hover:text-blue-500',
         ]"
       >
         <!-- 选中指示器 -->
         <div
-          v-if="currentPath === item.path"
+          v-if="isPathActive(item.path)"
           class="absolute -left-1 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-500 rounded-r"
         ></div>
 
