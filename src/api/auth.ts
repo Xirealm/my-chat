@@ -5,7 +5,6 @@ import type {
   LoginResult,
   UserInfo,
 } from "@/types/auth";
-import { pa } from "element-plus/es/locale/index.mjs";
 
 /**
  * 用户登录

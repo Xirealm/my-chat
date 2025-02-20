@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 import { ElNotification } from "element-plus";
 import { postLoginAPI, postRegisterAPI } from "@/api/auth";
 import type { LoginForm, RegisterForm } from "@/types/auth";
 import type { FormInstance } from "element-plus";
 
 const router = useRouter();
-const userStore = useUserStore();
+const authStore = useAuthStore();
 
 const isLogin = ref(true);
 const loginForm = ref<LoginForm>({
@@ -83,7 +83,7 @@ const handleLogin = async () => {
       phone: loginForm.value.phone,
       password: loginForm.value.password,
     });
-    userStore.setUserInfo(result.user, result.token);
+    authStore.setUserInfo(result.user, result.token);
     router.push("/main/chat");
   } catch (error: any) {
     if (error.message) {

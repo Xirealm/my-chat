@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ChatIcon, ContactIcon, LogoutIcon } from "@/components/icons";
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 import { postLogoutAPI } from "@/api/auth";
 import { ElMessageBox } from "element-plus";
 import UserAvatar from "@/components/UserAvatar.vue";
@@ -10,7 +10,7 @@ import UserAvatar from "@/components/UserAvatar.vue";
 const route = useRoute();
 const router = useRouter();
 const currentPath = computed(() => route.path);
-const userStore = useUserStore();
+const authStore = useAuthStore();
 
 // 导航菜单项
 const navItems = [
@@ -38,7 +38,7 @@ const handleLogout = async () => {
       showClose: false,
     });
     await postLogoutAPI();
-    userStore.clearUserInfo();
+    authStore.clearUserInfo();
     router.push("/login");
   } catch (error) {
     // 用户取消操作，不做处理
@@ -55,16 +55,16 @@ const handleLogout = async () => {
       <!-- 头像部分 -->
       <div class="mb-8 cursor-pointer relative group">
         <UserAvatar
-          :avatar="userStore.userInfo?.avatar"
-          :username="userStore.userInfo?.username || '未知用户'"
+          :avatar="authStore.userInfo?.avatar"
+          :username="authStore.userInfo?.username || '未知用户'"
           size="lg"
         />
         <div
           class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
           :class="{
-            'bg-green-500': userStore.userInfo?.status === 'online',
-            'bg-yellow-500': userStore.userInfo?.status === 'away',
-            'bg-gray-400': userStore.userInfo?.status === 'offline',
+            'bg-green-500': authStore.userInfo?.status === 'online',
+            'bg-yellow-500': authStore.userInfo?.status === 'away',
+            'bg-gray-400': authStore.userInfo?.status === 'offline',
           }"
         ></div>
       </div>

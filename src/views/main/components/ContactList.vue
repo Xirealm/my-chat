@@ -1,6 +1,17 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
 import SearchInput from "@/components/common/SearchInput.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
+import { getAllUsersAPI } from "@/api/user";
+import { useUserStore } from "@/stores/user";
+
+const userStore = useUserStore();
+onMounted(async () => {
+  // 获取所有用户列表
+  const users = await getAllUsersAPI();
+  console.log("所有用户列表:", users);
+  userStore.setUsers(users);
+});
 
 // 处理搜索
 const handleSearch = (searchText: string) => {
@@ -26,7 +37,7 @@ const contacts = [
         <div class="space-y-1">
           <!-- 这里放联系人列表项 -->
           <div
-            v-for="contact in contacts"
+            v-for="contact in userStore.users"
             :key="contact.id"
             class="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
           >
@@ -40,7 +51,7 @@ const contacts = [
                 {{ contact.username }}
               </div>
               <p class="text-sm text-gray-500 truncate">
-                [{{ contact.online ? "在线" : "离线" }}]
+                [{{ contact.status === 'online' ? "在线" : "离线" }}]
               </p>
             </div>
           </div>

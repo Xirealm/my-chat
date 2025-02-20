@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import type { ApiResponse } from "@/types/http";
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
@@ -14,9 +14,9 @@ const http = axios.create({
 // 请求拦截器
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const userStore = useUserStore();
-    if (userStore.token) {
-      config.headers.Authorization = `Bearer ${userStore.token}`;
+    const authStore = useAuthStore();
+    if (authStore.token) {
+      config.headers.Authorization = `Bearer ${authStore.token}`;
     }
     return config;
   },

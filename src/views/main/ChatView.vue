@@ -2,11 +2,11 @@
 import ChatList from "./components/ChatList.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
 import { EmojiIcon, FileIcon } from "@/components/icons";
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 import { io } from "socket.io-client";
 import { onMounted } from "vue";
 
-const userStore = useUserStore();
+const authStore = useAuthStore();
 
 const currentChat = {
   username: "张三",
@@ -19,7 +19,7 @@ const currentChat = {
 //     transports: ["websocket"],
 //     auth: {
 //       authorization:
-//         "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImlhdCI6MTczOTk0OTk5MSwiZXhwIjoxNzQwMDM2MzkxfQ.wB88EfOfOm3McbLni6cR5XH75hZz_eGvs4MRXSztzWA",
+//         "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImlhdCI6MTczOTk3MTAxOCwiZXhwIjoxNzQwMDU3NDE4fQ.UGaLH6Z7vmSKUmgYaVHJ8U2DTpuSkRNuj0cy93yho5U",
 //     },
 //   });
 
@@ -38,9 +38,9 @@ const currentChat = {
 //   // 测试发送消息
 //   setTimeout(() => {
 //     socket.emit("sendMessage", {
-//       content: "这是一条测试消息",
+//       content: "这是测试消息666",
 //       timestamp: new Date(),
-//       receiverId: 3,
+//       receiverId: 2,
 //     });
 //   }, 2000);
 // });
@@ -109,8 +109,8 @@ const currentChat = {
               </div>
             </div>
             <UserAvatar
-              :username="userStore.userInfo?.username || ''"
-              :avatar="userStore.userInfo?.avatar"
+              :username="authStore.userInfo?.username || ''"
+              :avatar="authStore.userInfo?.avatar"
               size="sm"
             />
           </div>
