@@ -9,6 +9,7 @@ import { EmojiIcon, FileIcon } from "@/components/icons";
 import { useAuthStore } from "@/stores/auth";
 import { useChatStore } from "@/stores/chat";
 import { formatTime } from "@/utils/format";
+import FileUploadDialog from "@/components/FileUploadDialog.vue";
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -23,7 +24,8 @@ const previousChatId = ref<number | null>(null);
 const messageContainer = ref<any>(null);
 
 // 初始化 WebSocket
-const { socket, subscribeToChat, unsubscribeFromChat, sendMessage } = useSocket();
+const { socket, subscribeToChat, unsubscribeFromChat, sendMessage } =
+  useSocket();
 
 // 消息滚动处理
 const scrollToBottom = async () => {
@@ -101,6 +103,33 @@ const handleSendMessage = () => {
   });
 
   messageText.value = "";
+};
+
+// 添加文件上传相关状态
+const showFileDialog = ref(false);
+const selectedFile = ref<File | null>(null);
+
+// 添加文件选择处理函数
+const handleFileSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    selectedFile.value = input.files[0];
+    showFileDialog.value = true;
+  }
+  // 重置 input 以便可以选择相同的文件
+  input.value = "";
+};
+
+// 添加文件发送处理函数
+const handleFileSend = () => {
+  // 这里添加文件发送逻辑
+  console.log("发送文件:", selectedFile.value);
+  selectedFile.value = null;
+};
+
+// 添加文件上传取消处理函数
+const handleFileCancel = () => {
+  selectedFile.value = null;
 };
 </script>
 
@@ -216,11 +245,12 @@ const handleSendMessage = () => {
             >
               <EmojiIcon class="w-5 h-5" />
             </button>
-            <button
-              class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            <label
+              class="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
+              <input type="file" class="hidden" @change="handleFileSelect" />
               <FileIcon class="w-5 h-5" />
-            </button>
+            </label>
           </div>
           <!-- 输入框区域 -->
           <div class="flex flex-col p-3">
@@ -247,6 +277,14 @@ const handleSendMessage = () => {
       </div>
     </div>
   </div>
+
+  <!-- 添加文件上传对话框 -->
+  <FileUploadDialog
+    v-model:visible="showFileDialog"
+    :file="selectedFile"
+    @confirm="handleFileSend"
+    @cancel="handleFileCancel"
+  />
 </template>
 
 <style scoped>
