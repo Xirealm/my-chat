@@ -2,6 +2,7 @@ import axios from "axios";
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import type { ApiResponse } from "@/types/http";
 import { useAuthStore } from "@/stores/auth";
+import router from "@/router";
 
 const axiosInstance = axios.create({
   // baseURL:"/api",
@@ -41,6 +42,9 @@ axiosInstance.interceptors.response.use(
       switch (error.response.status) {
         case 401:
           message = "未授权，请重新登录";
+          const authStore = useAuthStore();
+          authStore.token = '';  // 清除token
+          router.push('/login');  // 重定向到登录页
           break;
         case 403:
           message = "拒绝访问";
