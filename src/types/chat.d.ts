@@ -4,4 +4,16 @@ export interface Chat {
   updatedAt: string;
   avatar: string | undefined;
   name: string;
+  lastMessage: {
+    content: string;
+    type: string;
+  };
+}
+
+export interface Message {
+  id: number;
+  content: string;
+  senderId: number;
+  chatId: number;
+  createdAt: string;
 }

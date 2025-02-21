@@ -27,8 +27,7 @@ const handleSendMessage = async () => {
 
     // 跳转到聊天页面
     router.push({
-      path: "/main/chat",
-      query: { chatId: chatId },
+      path: `/main/chat/${chatId}` ,
     });
   } catch (error) {
     console.error("创建聊天失败:", error);

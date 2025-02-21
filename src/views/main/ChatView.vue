@@ -1,71 +1,109 @@
 <script setup lang="ts">
-import { ref, watchEffect } from "vue";
+import { ref, watch, nextTick, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import type { Message, Chat } from "@/types/chat";
+import { useSocket } from "@/composables/useSocket";
 import ChatList from "./components/ChatList.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
 import { EmojiIcon, FileIcon } from "@/components/icons";
 import { useAuthStore } from "@/stores/auth";
 import { useChatStore } from "@/stores/chat";
-import { io } from "socket.io-client";
-import { onMounted } from "vue";
+import { formatTime } from "@/utils/format";
 
 const route = useRoute();
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 
-// 当前聊天信息
-const currentChat = ref();
-
-// 当前聊天数据
+// 状态管理
+const currentChat = ref<Chat | null>(null);
 const loading = ref(false);
+const messages = ref<Message[]>([]);
+const messageText = ref("");
+const previousChatId = ref<number | null>(null);
+const messageContainer = ref<any>(null);
 
-// 监听路由变化更新当前聊天信息
-watchEffect(() => {
-  if (route.params.chatId) {
-    currentChat.value = chatStore.chatList.find(
-      (chat) => chat.id === Number(route.params.chatId)
-    );
-  } else {
-    currentChat.value = null;
+// 初始化 WebSocket
+const {
+  socket,
+  initSocket,
+  subscribeToChat,
+  unsubscribeFromChat,
+  sendMessage,
+} = useSocket(authStore.token as string);
+initSocket();
+
+// 消息滚动处理
+const scrollToBottom = async () => {
+  await nextTick();
+  if (messageContainer.value) {
+    const scrollbar = messageContainer.value;
+    scrollbar.setScrollTop(scrollbar.wrapRef.scrollHeight);
   }
+};
+
+// 监听路由变化，更新当前聊天
+watch(
+  () => route.params.chatId,
+  (newChatId) => {
+    if (newChatId) {
+      currentChat.value =
+        chatStore.chatList.find((chat) => chat.id === Number(newChatId)) ||
+        null;
+    } else {
+      currentChat.value = null;
+    }
+  },
+  { immediate: true }
+);
+
+// 处理聊天室切换
+watch(
+  () => currentChat.value?.id,
+  async (newChatId) => {
+    if (!socket.value || !newChatId) {
+      loading.value = false;
+      return;
+    }
+
+    loading.value = true;
+    messages.value = [];
+
+    try {
+      // 取消订阅前一个聊天室
+      if (previousChatId.value) {
+        await unsubscribeFromChat(previousChatId.value);
+      }
+
+      // 订阅新聊天室
+      const historicalMessages = await subscribeToChat(newChatId);
+      messages.value = historicalMessages;
+      previousChatId.value = newChatId;
+    } finally {
+      loading.value = false;
+      await scrollToBottom();
+    }
+  },
+  { immediate: true }
+);
+
+// 处理新消息
+socket.value?.on("newMessage", async (message: Message) => {
+  messages.value.push(message);
+  await scrollToBottom();
+  // 收到新消息后更新聊天列表
+  await chatStore.fetchChats();
 });
 
-// onMounted(() => {
-//   const socket = io("http://localhost:3000/chat", {
-//     transports: ["websocket"],
-//     auth: {
-//       authorization:
-//         "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImlhdCI6MTczOTk3MTAxOCwiZXhwIjoxNzQwMDU3NDE4fQ.UGaLH6Z7vmSKUmgYaVHJ8U2DTpuSkRNuj0cy93yho5U",
-//     },
-//   });
-
-//   socket.on("connect", () => {
-//     console.log("Connected to WebSocket");
-//   });
-
-//   socket.on("error", (error) => {
-//     console.error("WebSocket error:", error);
-//   });
-
-//   socket.on("newMessage", (message) => {
-//     console.log("Received message:", message);
-//   });
-
-//   // 测试发送消息
-//   setTimeout(() => {
-//     socket.emit("sendMessage", {
-//       content: "这是测试消息666",
-//       timestamp: new Date(),
-//       receiverId: 2,
-//     });
-//   }, 2000);
-// });
-
-const messageText = ref("");
-
+// 发送消息处理
 const handleSendMessage = () => {
-  if (!messageText.value.trim()) return;
-  console.log("发送消息:", messageText.value);
+  const trimmedMessage = messageText.value.trim();
+  if (!trimmedMessage || !currentChat.value) return;
+
+  sendMessage({
+    content: trimmedMessage,
+    chatId: currentChat.value.id,
+  });
+
   messageText.value = "";
 };
 </script>
@@ -116,55 +154,60 @@ const handleSendMessage = () => {
           </div>
         </div>
 
-        <!-- 聊天内容区域 -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-          <!-- 对方的消息 -->
-          <div class="flex items-start space-x-3">
-            <UserAvatar
-              :username="currentChat.name"
-              :avatar="currentChat.avatar"
-              size="sm"
-            />
-            <div class="flex flex-col items-start max-w-[70%]">
-              <div
-                class="bg-white px-4 py-2 rounded-2xl rounded-tl-sm shadow-sm"
-              >
-                <p class="text-sm text-gray-700 break-words">
-                  这是一条示例消息，展示对方发送的内容
-                </p>
-              </div>
-              <span class="text-xs text-gray-400 mt-1 ml-1">12:30</span>
-            </div>
-          </div>
-
-          <!-- 自己的消息 -->
-          <div class="flex items-start justify-end space-x-3">
-            <div class="flex flex-col items-end max-w-[70%]">
-              <div
-                class="bg-blue-500 px-4 py-2 rounded-2xl rounded-tr-sm shadow-sm"
-              >
-                <p class="text-sm text-white break-words">
-                  这是一条示例回复，展示自己发送的内容
-                </p>
-              </div>
-              <span class="text-xs text-gray-400 mt-1 mr-1">12:31</span>
-            </div>
-            <UserAvatar
-              :username="authStore.userInfo?.username || ''"
-              :avatar="authStore.userInfo?.avatar"
-              size="sm"
-            />
-          </div>
-
-          <!-- 时间分割线 -->
-          <div class="flex items-center justify-center py-2">
-            <div class="flex-1 h-[1px] bg-gray-200"></div>
-            <span class="text-xs text-gray-400 bg-gray-50 px-4"
-              >昨天 12:30</span
+        <!-- 修改聊天内容区域 -->
+        <el-scrollbar
+          ref="messageContainer"
+          class="flex-1 bg-gray-50"
+          wrap-class="p-6 space-y-4"
+          :height="'100%'"
+        >
+          <template v-for="message in messages" :key="message.id">
+            <!-- 对方的消息 -->
+            <div
+              v-if="message.senderId != authStore.userInfo?.id"
+              class="flex items-start space-x-3"
             >
-            <div class="flex-1 h-[1px] bg-gray-200"></div>
-          </div>
-        </div>
+              <UserAvatar
+                :username="currentChat.name"
+                :avatar="currentChat.avatar"
+                size="sm"
+              />
+              <div class="flex flex-col items-start max-w-[70%]">
+                <div
+                  class="bg-white px-4 py-2 rounded-2xl rounded-tl-sm shadow-sm"
+                >
+                  <p class="text-sm text-gray-700 break-words">
+                    {{ message.content }}
+                  </p>
+                </div>
+                <span class="text-xs text-gray-400 mt-1 ml-1">
+                  {{ formatTime(message.createdAt) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- 自己的消息 -->
+            <div v-else class="flex items-start justify-end space-x-3">
+              <div class="flex flex-col items-end max-w-[70%]">
+                <div
+                  class="bg-blue-500 px-4 py-2 rounded-2xl rounded-tr-sm shadow-sm"
+                >
+                  <p class="text-sm text-white break-words">
+                    {{ message.content }}
+                  </p>
+                </div>
+                <span class="text-xs text-gray-400 mt-1 mr-1">
+                  {{ formatTime(message.createdAt) }}
+                </span>
+              </div>
+              <UserAvatar
+                :username="authStore.userInfo?.username || ''"
+                :avatar="authStore.userInfo?.avatar"
+                size="sm"
+              />
+            </div>
+          </template>
+        </el-scrollbar>
 
         <!-- 底部输入区域 -->
         <div class="border-t border-gray-100 bg-white">
@@ -210,33 +253,12 @@ const handleSendMessage = () => {
   </div>
 </template>
 
-<style scoped >
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.2) transparent;
+<style scoped>
+:deep(.el-scrollbar__bar) {
+  z-index: 10;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 2px;  
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 40px 0;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.2);
-  border-radius: 10px;
-  transition: background-color 0.2s;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(156, 163, 175, 0.4);
-}
-
-/* 隐藏滚动条上下箭头 */
-.custom-scrollbar::-webkit-scrollbar-button {
-  display: none;
+:deep(.el-scrollbar__wrap) {
+  overflow-x: hidden;
 }
 </style>

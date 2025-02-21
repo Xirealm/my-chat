@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 
 export interface UserInfo {
-  id: string;
+  id: number;
   username: string;
   avatar?: string;
   status?: "online" | "offline" | "away";

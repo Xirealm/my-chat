@@ -3,7 +3,7 @@ import SearchInput from "@/components/common/SearchInput.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
 import { useChatStore } from "@/stores/chat";
 import { onMounted } from "vue";
-import { formatTime } from "@/utils/format";
+import { formatTimeShort } from "@/utils/format";
 import { useRouter } from "vue-router";
 
 const chatStore = useChatStore();
@@ -12,31 +12,6 @@ const router = useRouter();
 onMounted(async () => {
   await chatStore.fetchChats();
 });
-
-// 模拟聊天列表数据
-const chatList = [
-  {
-    id: 1,
-    name: "张三",
-    avatar: "",
-    lastMessage: "好的，明天见！",
-    updateAt: "12:30",
-  },
-  {
-    id: 2,
-    username: "李四",
-    avatar: "",
-    lastMessage: "收到了，谢谢！",
-    updateAt: "11:45",
-  },
-  {
-    id: 3,
-    username: "王五",
-    avatar: "",
-    lastMessage: "项目进展如何？",
-    updateAt: "09:20",
-  },
-];
 
 // 处理搜索
 const handleSearch = (searchText: string) => {
@@ -72,11 +47,11 @@ const handleChatClick = (chatId: number) => {
                   chat.name
                 }}</span>
                 <span class="text-xs text-gray-400 group-hover:text-gray-500">
-                  {{ formatTime(chat.updatedAt) }}
+                  {{ formatTimeShort(chat.updatedAt) }}
                 </span>
               </div>
               <p class="text-sm text-gray-500 truncate">
-                {{ chat.name }}
+                {{ chat.lastMessage.content }}
               </p>
             </div>
           </div>
