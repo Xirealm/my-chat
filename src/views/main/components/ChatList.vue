@@ -10,7 +10,7 @@ const chatStore = useChatStore();
 const router = useRouter();
 
 onMounted(async () => {
-  await chatStore.fetchChats();
+  await chatStore.fetchChats();  
 });
 
 // 处理搜索
@@ -51,7 +51,7 @@ const handleChatClick = (chatId: number) => {
                 </span>
               </div>
               <p class="text-sm text-gray-500 truncate">
-                {{ chat.lastMessage.content }}
+                {{ chat.lastMessage?.content || "暂无消息" }}
               </p>
             </div>
           </div>
