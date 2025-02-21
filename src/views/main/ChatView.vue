@@ -23,14 +23,7 @@ const previousChatId = ref<number | null>(null);
 const messageContainer = ref<any>(null);
 
 // 初始化 WebSocket
-const {
-  socket,
-  initSocket,
-  subscribeToChat,
-  unsubscribeFromChat,
-  sendMessage,
-} = useSocket(authStore.token as string);
-initSocket();
+const { socket, subscribeToChat, unsubscribeFromChat, sendMessage } = useSocket();
 
 // 消息滚动处理
 const scrollToBottom = async () => {
@@ -60,7 +53,7 @@ watch(
 watch(
   () => currentChat.value?.id,
   async (newChatId) => {
-    if (!socket.value || !newChatId) {
+    if (!socket || !newChatId) {
       loading.value = false;
       return;
     }
@@ -86,12 +79,15 @@ watch(
   { immediate: true }
 );
 
-// 处理新消息
-socket.value?.on("newMessage", async (message: Message) => {
-  messages.value.push(message);
-  await scrollToBottom();
-  // 收到新消息后更新聊天列表
-  await chatStore.fetchChats();
+// 处理新消息监听
+onMounted(() => {
+  if (!socket) return;
+  socket.on("newMessage", async (message: Message) => {
+    messages.value.push(message);
+    await scrollToBottom();
+    // 收到新消息后更新聊天列表
+    await chatStore.fetchChats();
+  });
 });
 
 // 发送消息处理

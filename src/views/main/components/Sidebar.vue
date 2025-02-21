@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ChatIcon, ContactIcon, LogoutIcon } from "@/components/icons";
 import { useAuthStore } from "@/stores/auth";
+import { useSocketStore } from "@/stores/socket"; // 添加这一行
 import { postLogoutAPI } from "@/api/auth";
 import { ElMessageBox } from "element-plus";
 import UserAvatar from "@/components/UserAvatar.vue";
@@ -11,6 +12,7 @@ const route = useRoute();
 const router = useRouter();
 const currentPath = computed(() => route.path);
 const authStore = useAuthStore();
+const socketStore = useSocketStore(); // 添加这一行
 
 // 导航菜单项
 const navItems = [
@@ -38,6 +40,7 @@ const handleLogout = async () => {
       showClose: false,
     });
     await postLogoutAPI();
+    socketStore.disconnect(); // 添加这一行，断开 WebSocket 连接
     authStore.clearUserInfo();
     router.push("/login");
   } catch (error) {

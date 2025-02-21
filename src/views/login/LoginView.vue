@@ -6,9 +6,11 @@ import { ElNotification } from "element-plus";
 import { postLoginAPI, postRegisterAPI } from "@/api/auth";
 import type { LoginForm, RegisterForm } from "@/types/auth";
 import type { FormInstance } from "element-plus";
+import { useSocketStore } from "@/stores/socket";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const socketStore = useSocketStore();
 
 const isLogin = ref(true);
 const loginForm = ref<LoginForm>({
@@ -84,6 +86,8 @@ const handleLogin = async () => {
       password: loginForm.value.password,
     });
     authStore.setUserInfo(result.user, result.token);
+    // 登录成功后初始化 WebSocket
+    socketStore.initSocket(result.token);
     router.push("/main/chat");
   } catch (error: any) {
     if (error.message) {
