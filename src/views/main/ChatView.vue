@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-import type { Message, Chat } from "@/types/chat";
+import type { Message, Chat } from "@/types/chat.d";
 import { useSocket } from "@/composables/useSocket";
 import ChatList from "./components/ChatList.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
 import { EmojiIcon, FileIcon } from "@/components/icons";
 import { useAuthStore } from "@/stores/auth";
 import { useChatStore } from "@/stores/chat";
-import { formatTime } from "@/utils/format";
+import { formatTime, formatFileSize } from "@/utils/format";
 import FileUploadDialog from "@/components/FileUploadDialog.vue";
+import { ElMessage } from "element-plus";
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -46,7 +47,8 @@ watch(
   async (newChatId) => {
     if (newChatId) {
       const chatId = Number(newChatId);
-      currentChat.value = chatStore.chatList.find((chat) => chat.id === chatId) || null;
+      currentChat.value =
+        chatStore.chatList.find((chat: Chat) => chat.id === chatId) || null;
 
       if (currentChat.value) {
         loading.value = true;
@@ -110,16 +112,58 @@ const handleFileSelect = (event: Event) => {
   input.value = "";
 };
 
-// 添加文件发送处理函数
-const handleFileSend = () => {
-  // 这里添加文件发送逻辑
-  console.log("发送文件:", selectedFile.value);
-  selectedFile.value = null;
+// 修改文件发送处理函数
+const handleFileSend = async () => {
+  if (!selectedFile.value || !currentChat.value) return;
+
+  try {
+    const message = await useSocket().uploadFile(
+      selectedFile.value,
+      currentChat.value.id,
+      (progress) => {
+        console.log("Upload progress:", progress);
+      }
+    );
+    // 消息会通过 socket 的 newMessage 事件自动添加到消息列表
+  } catch (error) {
+    console.error("文件上传失败:", error);
+    ElMessage.error("文件上传失败");
+  } finally {
+    selectedFile.value = null;
+    showFileDialog.value = false;
+  }
 };
 
 // 添加文件上传取消处理函数
 const handleFileCancel = () => {
   selectedFile.value = null;
+};
+
+// 修改文件下载处理函数
+const handleFileDownload = async (message: Message) => {
+  if (!message.file) return;
+
+  try {
+    const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+    const response = await fetch(`${baseURL}${message.file.path}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = message.file.filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error("文件下载失败:", error);
+    ElMessage.error("文件下载失败");
+  }
 };
 </script>
 
@@ -188,12 +232,93 @@ const handleFileCancel = () => {
                 size="sm"
               />
               <div class="flex flex-col items-start max-w-[70%]">
+                <!-- 根据消息类型显示不同内容 -->
                 <div
-                  class="bg-white px-4 py-2 rounded-2xl rounded-tl-sm shadow-sm"
+                  :class="[
+                    message.type === 'text'
+                      ? 'bg-white px-4 py-2 rounded-2xl rounded-tl-sm shadow-sm'
+                      : 'bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors',
+                  ]"
                 >
-                  <p class="text-sm text-gray-700 break-words">
+                  <!-- 文本消息 -->
+                  <p
+                    v-if="message.type === 'text'"
+                    class="text-sm text-gray-700 break-words"
+                  >
                     {{ message.content }}
                   </p>
+
+                  <!-- 文件消息 -->
+                  <template v-if="message.type === 'file'">
+                    <div
+                      class="flex items-center gap-3 px-4 py-3 cursor-pointer group"
+                      @click="handleFileDownload(message)"
+                    >
+                      <div
+                        :class="[
+                          message.senderId === authStore.userInfo?.id
+                            ? 'bg-blue-400/30'
+                            : 'bg-blue-50',
+                        ]"
+                        class="p-2 rounded-lg"
+                      >
+                        <FileIcon
+                          :class="[
+                            message.senderId === authStore.userInfo?.id
+                              ? 'text-white'
+                              : 'text-blue-500',
+                          ]"
+                          class="w-6 h-6"
+                        />
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p
+                          :class="[
+                            message.senderId === authStore.userInfo?.id
+                              ? 'text-white'
+                              : 'text-gray-900',
+                          ]"
+                          class="text-sm font-medium truncate"
+                        >
+                          {{ message.file?.filename }}
+                        </p>
+                        <div
+                          :class="[
+                            message.senderId === authStore.userInfo?.id
+                              ? 'text-blue-100'
+                              : 'text-gray-500',
+                          ]"
+                          class="text-xs mt-0.5 space-y-0.5"
+                        >
+                          <p>
+                            大小：{{ formatFileSize(message.file?.size || 0) }}
+                          </p>
+                          <p>类型：{{ message.file?.mimetype || "未知" }}</p>
+                        </div>
+                      </div>
+                      <div
+                        :class="[
+                          message.senderId === authStore.userInfo?.id
+                            ? 'text-white'
+                            : 'text-blue-500',
+                        ]"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </template>
                 </div>
                 <span class="text-xs text-gray-400 mt-1 ml-1">
                   {{ formatTime(message.createdAt) }}
@@ -204,12 +329,60 @@ const handleFileCancel = () => {
             <!-- 自己的消息 -->
             <div v-else class="flex items-start justify-end space-x-3">
               <div class="flex flex-col items-end max-w-[70%]">
+                <!-- 根据消息类型显示不同内容 -->
                 <div
-                  class="bg-blue-500 px-4 py-2 rounded-2xl rounded-tr-sm shadow-sm"
+                  :class="[
+                    message.type === 'text'
+                      ? 'bg-blue-500 px-4 py-2 rounded-2xl rounded-tr-sm shadow-sm'
+                      : 'bg-blue-500 rounded-lg shadow-sm hover:bg-blue-600 transition-colors',
+                  ]"
                 >
-                  <p class="text-sm text-white break-words">
+                  <!-- 文本消息 -->
+                  <p
+                    v-if="message.type === 'text'"
+                    class="text-sm text-white break-words"
+                  >
                     {{ message.content }}
                   </p>
+
+                  <!-- 文件消息 -->
+                  <template v-if="message.type === 'file'">
+                    <div
+                      class="flex items-center gap-3 px-4 py-3 cursor-pointer group"
+                      @click="handleFileDownload(message)"
+                    >
+                      <div class="bg-blue-400/30 p-2 rounded-lg">
+                        <FileIcon class="w-6 h-6 text-white" />
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">
+                          {{ message.file?.filename }}
+                        </p>
+                        <div class="text-xs text-blue-100 mt-0.5 space-y-0.5">
+                          <p>
+                            大小：{{ formatFileSize(message.file?.size || 0) }}
+                          </p>
+                          <p>类型：{{ message.file?.mimetype || "未知" }}</p>
+                        </div>
+                      </div>
+                      <div
+                        class="text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </template>
                 </div>
                 <span class="text-xs text-gray-400 mt-1 mr-1">
                   {{ formatTime(message.createdAt) }}

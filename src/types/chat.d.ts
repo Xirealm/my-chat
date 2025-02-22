@@ -16,4 +16,13 @@ export interface Message {
   senderId: number;
   chatId: number;
   createdAt: string;
+  type: "text" | "file";
+  file?: {
+    id: number;
+    filename: string;
+    path: string;
+    mimetype: string;
+    size: number;
+    createdAt: string;
+  };
 }

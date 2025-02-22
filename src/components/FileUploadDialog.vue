@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 interface Props {
   file: File | null;
@@ -7,7 +7,7 @@ interface Props {
 
 interface Emits {
   (e: "update:visible", value: boolean): void;
-  (e: "confirm"): void;
+  (e: "confirm"): Promise<void>;
   (e: "cancel"): void;
 }
 
@@ -29,14 +29,21 @@ const fileType = computed(() => {
   return ext;
 });
 
+const uploading = ref(false);
+
 const handleClose = () => {
   emit("cancel");
   visible.value = false;
 };
 
-const handleConfirm = () => {
-  emit("confirm");
-  visible.value = false;
+const handleConfirm = async () => {
+  uploading.value = true;
+  try {
+    await emit("confirm");
+  } finally {
+    uploading.value = false;
+    visible.value = false;
+  }
 };
 </script>
 
@@ -69,8 +76,15 @@ const handleConfirm = () => {
 
     <template #footer>
       <div class="flex justify-end space-x-3">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">发送</el-button>
+        <el-button :disabled="uploading" @click="handleClose">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="uploading"
+          :disabled="uploading"
+          @click="handleConfirm"
+        >
+          发送
+        </el-button>
       </div>
     </template>
   </el-dialog>
