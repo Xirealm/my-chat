@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { io, Socket } from "socket.io-client";
+import { postLogoutAPI } from "@/api/auth";
 
 export const useSocketStore = defineStore("socket", () => {
   const socket = ref<Socket | null>(null);
@@ -27,9 +28,10 @@ export const useSocketStore = defineStore("socket", () => {
       isConnected.value = true;
     });
 
-    socket.value.on("disconnect", () => {
+    socket.value.on("disconnect", async () => {
       console.log("Disconnected from WebSocket");
       isConnected.value = false;
+      await postLogoutAPI();
     });
 
     socket.value.on("reconnect_attempt", (attempt) => {
