@@ -5,12 +5,20 @@ import { useChatStore } from "@/stores/chat";
 import { onMounted } from "vue";
 import { formatTimeShort } from "@/utils/format";
 import { useRouter } from "vue-router";
+import { useSocket } from "@/composables/useSocket";
 
 const chatStore = useChatStore();
 const router = useRouter();
+const { socket } = useSocket();
 
 onMounted(async () => {
-  await chatStore.fetchChats();  
+  await chatStore.fetchChats();
+
+  // 监听会话列表更新
+  socket?.on("chatListUpdate", async ({ chatId, lastMessage }) => {
+    // 更新本地会话列表
+    await chatStore.fetchChats();
+  });
 });
 
 // 处理搜索

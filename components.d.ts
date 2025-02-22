@@ -15,6 +15,7 @@ declare module 'vue' {
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElInput: typeof import('element-plus/es')['ElInput']
+    ElProgress: typeof import('element-plus/es')['ElProgress']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     EmojiIcon: typeof import('./src/components/icons/EmojiIcon.vue')['default']
     FileIcon: typeof import('./src/components/icons/FileIcon.vue')['default']

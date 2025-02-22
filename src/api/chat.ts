@@ -12,12 +12,12 @@ export const getChatsAPI = () => {
  * 创建或获取私聊会话
  */
 export const getPrivateChatAPI = (userId: number) => {
-  return http.post<{ chatId: string }>("/chats/private", { userId });
+  return http.post<{ chatId: number }>("/chats/private", { userId });
 };
 
 /**
  * 获取单个聊天会话详情
  */
-export const getChatByIdAPI = (chatId: string) => {
+export const getChatByIdAPI = (chatId: number) => {
   return http.get<Chat>(`/chats/${chatId}`);
 };

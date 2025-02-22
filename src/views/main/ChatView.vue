@@ -65,9 +65,9 @@ watch(
 
     try {
       // 取消订阅前一个聊天室
-      if (previousChatId.value) {
-        await unsubscribeFromChat(previousChatId.value);
-      }
+      // if (previousChatId.value) {
+      //   await unsubscribeFromChat(previousChatId.value);
+      // }
 
       // 订阅新聊天室
       const historicalMessages = await subscribeToChat(newChatId);
@@ -82,11 +82,15 @@ watch(
 );
 
 // 处理新消息监听
-onMounted(() => {
+onMounted(async () => {
   if (!socket) return;
+
   socket.on("newMessage", async (message: Message) => {
-    messages.value.push(message);
-    await scrollToBottom();
+    // 只有当消息属于当前聊天时才添加到当前消息列表中
+    if (currentChat.value && message.chatId === currentChat.value.id) {
+      messages.value.push(message);
+      await scrollToBottom();
+    }
     // 收到新消息后更新聊天列表
     await chatStore.fetchChats();
   });

@@ -5,11 +5,16 @@ import { useUserStore } from "@/stores/user";
 import { getPrivateChatAPI } from "@/api/chat";
 import ContactList from "./components/ContactList.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
+import { useSocket } from "@/composables/useSocket";
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const currentUser = ref();
+
+const { subscribeToChat } =
+  useSocket();
+
 
 watchEffect(() => {
   const userId = Number(route.params.id);
@@ -23,7 +28,9 @@ const handleSendMessage = async () => {
   if (!currentUser.value) return;
   try {
     const { chatId } = await getPrivateChatAPI(currentUser.value.id);
-    console.log(chatId);
+
+    // 订阅新创建的聊天室
+    await subscribeToChat(chatId);
 
     // 跳转到聊天页面
     router.push({
