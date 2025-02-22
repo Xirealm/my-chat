@@ -56,14 +56,13 @@ export function useSocket() {
       const reader = new FileReader();
 
       reader.onload = async (e) => {
-        try {
+        try {        
           const result = await socketStore.socket!.emitWithAck("uploadFile", {
             file: e.target?.result,
             filename: file.name,
             mimetype: file.type,
             chatId: chatId,
           });
-
           if (result.success) {
             resolve(result.message);
           } else {

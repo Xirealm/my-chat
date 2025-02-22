@@ -112,7 +112,7 @@ const handleFileSelect = (event: Event) => {
   input.value = "";
 };
 
-// 修改文件发送处理函数
+// 文件发送处理函数
 const handleFileSend = async () => {
   if (!selectedFile.value || !currentChat.value) return;
 
