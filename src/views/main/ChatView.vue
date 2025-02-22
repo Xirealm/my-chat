@@ -5,7 +5,7 @@ import type { Message, Chat } from "@/types/chat.d";
 import { useSocket } from "@/composables/useSocket";
 import ChatList from "./components/ChatList.vue";
 import UserAvatar from "@/components/UserAvatar.vue";
-import { EmojiIcon, FileIcon } from "@/components/icons";
+import { EmojiIcon, FileIcon, DownloadIcon } from "@/components/icons";
 import { useAuthStore } from "@/stores/auth";
 import { useChatStore } from "@/stores/chat";
 import { formatTime, formatFileSize } from "@/utils/format";
@@ -144,13 +144,14 @@ const handleFileDownload = async (message: Message) => {
   if (!message.file) return;
 
   try {
-    const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+    const baseURL =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
     const response = await fetch(`${baseURL}${message.file.path}`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -243,7 +244,7 @@ const handleFileDownload = async (message: Message) => {
                   <!-- 文本消息 -->
                   <p
                     v-if="message.type === 'text'"
-                    class="text-sm text-gray-700 break-words"
+                    class="text-sm text-gray-700 break-words min-w-[0] max-w-[280px] whitespace-pre-wrap"
                   >
                     {{ message.content }}
                   </p>
@@ -251,71 +252,25 @@ const handleFileDownload = async (message: Message) => {
                   <!-- 文件消息 -->
                   <template v-if="message.type === 'file'">
                     <div
-                      class="flex items-center gap-3 px-4 py-3 cursor-pointer group"
+                      class="flex items-center gap-3 px-4 py-3 cursor-pointer group w-[280px]"
                       @click="handleFileDownload(message)"
                     >
-                      <div
-                        :class="[
-                          message.senderId === authStore.userInfo?.id
-                            ? 'bg-blue-400/30'
-                            : 'bg-blue-50',
-                        ]"
-                        class="p-2 rounded-lg"
-                      >
-                        <FileIcon
-                          :class="[
-                            message.senderId === authStore.userInfo?.id
-                              ? 'text-white'
-                              : 'text-blue-500',
-                          ]"
-                          class="w-6 h-6"
-                        />
+                      <div class="p-2 rounded-lg bg-blue-50">
+                        <FileIcon class="w-6 h-6 text-blue-500" />
                       </div>
                       <div class="flex-1 min-w-0">
-                        <p
-                          :class="[
-                            message.senderId === authStore.userInfo?.id
-                              ? 'text-white'
-                              : 'text-gray-900',
-                          ]"
-                          class="text-sm font-medium truncate"
-                        >
+                        <p class="text-sm font-medium truncate">
                           {{ message.file?.filename }}
                         </p>
-                        <div
-                          :class="[
-                            message.senderId === authStore.userInfo?.id
-                              ? 'text-blue-100'
-                              : 'text-gray-500',
-                          ]"
-                          class="text-xs mt-0.5 space-y-0.5"
-                        >
-                          <p>
-                            大小：{{ formatFileSize(message.file?.size || 0) }}
-                          </p>
-                          <p>类型：{{ message.file?.mimetype || "未知" }}</p>
+                        <div class="text-xs mt-0.5 space-y-0.5 text-gray-500">
+                          <p>{{ formatFileSize(message.file?.size || 0) }}</p>
+                          <!-- <p>类型：{{ message.file?.mimetype || "未知" }}</p> -->
                         </div>
                       </div>
                       <div
-                        :class="[
-                          message.senderId === authStore.userInfo?.id
-                            ? 'text-white'
-                            : 'text-blue-500',
-                        ]"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity text-blue-500"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fill-rule="evenodd"
-                            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                            clip-rule="evenodd"
-                          />
-                        </svg>
+                        <DownloadIcon class="w-5 h-5" />
                       </div>
                     </div>
                   </template>
@@ -340,7 +295,7 @@ const handleFileDownload = async (message: Message) => {
                   <!-- 文本消息 -->
                   <p
                     v-if="message.type === 'text'"
-                    class="text-sm text-white break-words"
+                    class="text-sm text-white break-words min-w-[0] max-w-[280px] whitespace-pre-wrap"
                   >
                     {{ message.content }}
                   </p>
@@ -348,10 +303,10 @@ const handleFileDownload = async (message: Message) => {
                   <!-- 文件消息 -->
                   <template v-if="message.type === 'file'">
                     <div
-                      class="flex items-center gap-3 px-4 py-3 cursor-pointer group"
+                      class="flex items-center gap-3 px-4 py-3 cursor-pointer group w-[280px]"
                       @click="handleFileDownload(message)"
                     >
-                      <div class="bg-blue-400/30 p-2 rounded-lg">
+                      <div class="bg-blue-400 p-2 rounded-lg">
                         <FileIcon class="w-6 h-6 text-white" />
                       </div>
                       <div class="flex-1 min-w-0">
@@ -359,27 +314,14 @@ const handleFileDownload = async (message: Message) => {
                           {{ message.file?.filename }}
                         </p>
                         <div class="text-xs text-blue-100 mt-0.5 space-y-0.5">
-                          <p>
-                            大小：{{ formatFileSize(message.file?.size || 0) }}
-                          </p>
-                          <p>类型：{{ message.file?.mimetype || "未知" }}</p>
+                          <p>{{ formatFileSize(message.file?.size || 0) }}</p>
+                          <!-- <p>类型：{{ message.file?.mimetype || "未知" }}</p> -->
                         </div>
                       </div>
                       <div
                         class="text-white opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fill-rule="evenodd"
-                            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                            clip-rule="evenodd"
-                          />
-                        </svg>
+                        <DownloadIcon class="w-5 h-5" />
                       </div>
                     </div>
                   </template>

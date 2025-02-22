@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ChatIcon: typeof import('./src/components/icons/ChatIcon.vue')['default']
     ContactIcon: typeof import('./src/components/icons/ContactIcon.vue')['default']
+    DownloadIcon: typeof import('./src/components/icons/DownloadIcon.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElForm: typeof import('element-plus/es')['ElForm']
