@@ -23,10 +23,29 @@ export const useChatStore = defineStore(
       chatList.value = chats;
     };
 
+    // 更新单个聊天的最后消息
+    const updateChatLastMessage = (chatId: number, message: any) => {
+      const chat = chatList.value.find((c) => c.id === chatId);
+      if (chat) {
+        chat.lastMessage = {
+          content: message.content,
+          type: message.type,
+        };
+        chat.updatedAt = new Date().toLocaleString();
+
+        // 重新排序聊天列表
+        chatList.value.sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+      }
+    };
+
     return {
       chatList,
       fetchChats,
       updateChatList,
+      updateChatLastMessage,
     };
   },
   {

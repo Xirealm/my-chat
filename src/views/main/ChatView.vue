@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted } from "vue";
+import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import type { Message, Chat } from "@/types/chat";
 import { useSocket } from "@/composables/useSocket";
@@ -20,12 +20,16 @@ const currentChat = ref<Chat | null>(null);
 const loading = ref(false);
 const messages = ref<Message[]>([]);
 const messageText = ref("");
-const previousChatId = ref<number | null>(null);
 const messageContainer = ref<any>(null);
 
 // 初始化 WebSocket
-const { socket, subscribeToChat, unsubscribeFromChat, sendMessage } =
-  useSocket();
+const {
+  socket,
+  subscribeToChat,
+  unsubscribeFromChat,
+  sendMessage,
+  getChatHistory,
+} = useSocket();
 
 // 消息滚动处理
 const scrollToBottom = async () => {
@@ -39,11 +43,23 @@ const scrollToBottom = async () => {
 // 监听路由变化，更新当前聊天
 watch(
   () => route.params.chatId,
-  (newChatId) => {
+  async (newChatId) => {
     if (newChatId) {
-      currentChat.value =
-        chatStore.chatList.find((chat) => chat.id === Number(newChatId)) ||
-        null;
+      const chatId = Number(newChatId);
+      currentChat.value = chatStore.chatList.find((chat) => chat.id === chatId) || null;
+
+      if (currentChat.value) {
+        loading.value = true;
+        messages.value = [];
+        try {
+          // 获取历史消息
+          const historicalMessages = await getChatHistory(chatId);
+          messages.value = historicalMessages;
+        } finally {
+          loading.value = false;
+          scrollToBottom();
+        }
+      }
     } else {
       currentChat.value = null;
     }
@@ -51,38 +67,8 @@ watch(
   { immediate: true }
 );
 
-// 处理聊天室切换
-watch(
-  () => currentChat.value?.id,
-  async (newChatId) => {
-    if (!socket || !newChatId) {
-      loading.value = false;
-      return;
-    }
-
-    loading.value = true;
-    messages.value = [];
-
-    try {
-      // 取消订阅前一个聊天室
-      // if (previousChatId.value) {
-      //   await unsubscribeFromChat(previousChatId.value);
-      // }
-
-      // 订阅新聊天室
-      const historicalMessages = await subscribeToChat(newChatId);
-      messages.value = historicalMessages;
-      previousChatId.value = newChatId;
-    } finally {
-      loading.value = false;
-      await scrollToBottom();
-    }
-  },
-  { immediate: true }
-);
-
-// 处理新消息监听
-onMounted(async () => {
+// 处理新消息监听时的滚动逻辑也需要修改
+onMounted(() => {
   if (!socket) return;
 
   socket.on("newMessage", async (message: Message) => {
@@ -91,7 +77,7 @@ onMounted(async () => {
       messages.value.push(message);
       await scrollToBottom();
     }
-    // 收到新消息后更新聊天列表
+    // 更新聊天列表
     await chatStore.fetchChats();
   });
 });
@@ -183,7 +169,7 @@ const handleFileCancel = () => {
           </div>
         </div>
 
-        <!-- 修改聊天内容区域 -->
+        <!-- 聊天内容区域 -->
         <el-scrollbar
           ref="messageContainer"
           class="flex-1 bg-gray-50"

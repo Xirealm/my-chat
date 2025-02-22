@@ -13,12 +13,6 @@ const { socket } = useSocket();
 
 onMounted(async () => {
   await chatStore.fetchChats();
-
-  // 监听会话列表更新
-  socket?.on("chatListUpdate", async ({ chatId, lastMessage }) => {
-    // 更新本地会话列表
-    await chatStore.fetchChats();
-  });
 });
 
 // 处理搜索

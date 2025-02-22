@@ -4,11 +4,23 @@ import type { Message } from "@/types/chat";
 export function useSocket() {
   const socketStore = useSocketStore();
 
-  const subscribeToChat = async (chatId: number): Promise<Message[]> => {
-    if (!socketStore.socket) return [];
+  const subscribeToChat = async (chatId: number): Promise<void> => {
+    if (!socketStore.socket) return;
 
     return new Promise((resolve) => {
       socketStore.socket!.emit("subscribeToChat", chatId, (response: any) => {
+        if (response.success) {
+          resolve();
+        }
+      });
+    });
+  };
+
+  const getChatHistory = async (chatId: number): Promise<Message[]> => {
+    if (!socketStore.socket) return [];
+
+    return new Promise((resolve) => {
+      socketStore.socket!.emit("getChatHistory", chatId, (response: any) => {
         if (response.success && response.messages) {
           resolve(response.messages.reverse());
         } else {
@@ -35,5 +47,6 @@ export function useSocket() {
     subscribeToChat,
     unsubscribeFromChat,
     sendMessage,
+    getChatHistory,
   };
 }
