@@ -53,7 +53,7 @@ const handleChatClick = (chatId: number) => {
                 </span>
               </div>
               <p class="text-sm text-gray-500 truncate">
-                {{ chat.lastMessage?.content || "暂无消息" }}
+                {{ chat.lastMessage?.type === 'file' ? '[文件]' : chat.lastMessage?.content || "暂无消息" }}
               </p>
             </div>
           </div>
